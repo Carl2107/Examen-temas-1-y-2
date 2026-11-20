@@ -1,0 +1,29 @@
+{
+	"name": "oro_dim_departamentos_sql",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Hospital_linkedservice",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Oro"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "departamento_key",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "nombre_departamento",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "gold",
+			"table": "dim_departamento"
+		}
+	}
+}
