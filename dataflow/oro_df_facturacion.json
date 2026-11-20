@@ -8,15 +8,31 @@
 		"typeProperties": {
 			"sources": [
 				{
+					"dataset": {
+						"referenceName": "silver_admisiones_sql",
+						"type": "DatasetReference"
+					},
 					"name": "admissions"
 				},
 				{
+					"dataset": {
+						"referenceName": "oro_dim_paciente_sql",
+						"type": "DatasetReference"
+					},
 					"name": "paciente"
 				},
 				{
+					"dataset": {
+						"referenceName": "oro_dim_departamentos_sql",
+						"type": "DatasetReference"
+					},
 					"name": "departamento"
 				},
 				{
+					"dataset": {
+						"referenceName": "oro_dim_servicio_cargo_sql",
+						"type": "DatasetReference"
+					},
 					"name": "serviciocargo"
 				},
 				{
@@ -27,6 +43,10 @@
 					"name": "facturacion"
 				},
 				{
+					"dataset": {
+						"referenceName": "oro_dim_fecha_sql",
+						"type": "DatasetReference"
+					},
 					"name": "fecha"
 				}
 			],
@@ -41,6 +61,12 @@
 			],
 			"transformations": [
 				{
+					"name": "join1"
+				},
+				{
+					"name": "select1"
+				},
+				{
 					"name": "lookup2"
 				},
 				{
@@ -51,12 +77,6 @@
 				},
 				{
 					"name": "lookup5"
-				},
-				{
-					"name": "join1"
-				},
-				{
-					"name": "select1"
 				}
 			],
 			"scriptLines": [
@@ -69,33 +89,38 @@
 				"          attending_doctor_id as integer",
 				"     ),",
 				"     allowSchemaDrift: true,",
-				"     validateSchema: false) ~> admissions",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT * FROM silver.admissions',",
+				"     format: 'query') ~> admissions",
 				"source(output(",
 				"          paciente_key as integer,",
-				"          patient_id_bk as integer,",
-				"          nombre_completo as string,",
-				"          genero as string,",
-				"          fecha_nacimiento as date,",
-				"          rango_etario as string,",
-				"          correo_electronico as string,",
-				"          direccion as string,",
-				"          proveedor_seguro as string",
+				"          patient_id_bk as integer",
 				"     ),",
 				"     allowSchemaDrift: true,",
-				"     validateSchema: false) ~> paciente",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT paciente_key, patient_id_bk FROM gold.dim_paciente',",
+				"     format: 'query') ~> paciente",
 				"source(output(",
 				"          departamento_key as integer,",
 				"          nombre_departamento as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
-				"     validateSchema: false) ~> departamento",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT departamento_key, nombre_departamento FROM gold.dim_departamento',",
+				"     format: 'query') ~> departamento",
 				"source(output(",
 				"          servicio_cargo_key as integer,",
 				"          tipo_cargo as string,",
 				"          estado_pago as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
-				"     validateSchema: false) ~> serviciocargo",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT servicio_cargo_key, tipo_cargo, estado_pago FROM gold.dim_servicio_cargo',",
+				"     format: 'query') ~> serviciocargo",
 				"source(output(",
 				"          billing_id as integer,",
 				"          admission_id as integer,",
@@ -107,42 +132,17 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     query: 'SELECT *\\nFROM silver.billing',",
+				"     query: 'SELECT * FROM silver.billing',",
 				"     format: 'query') ~> facturacion",
 				"source(output(",
 				"          fecha_key as integer,",
-				"          fecha_completa as date,",
-				"          anio as integer,",
-				"          trimestre as integer,",
-				"          trimestre_nombre as string,",
-				"          mes as integer,",
-				"          mes_nombre as string,",
-				"          mes_corto as string,",
-				"          semana_anio as integer,",
-				"          dia_mes as integer,",
-				"          dia_semana as integer,",
-				"          dia_nombre as string,",
-				"          es_fin_de_semana as boolean",
+				"          fecha_completa as date",
 				"     ),",
 				"     allowSchemaDrift: true,",
-				"     validateSchema: false) ~> fecha",
-				"select1, paciente lookup(patient_id == patient_id_bk,",
-				"     multiple: false,",
-				"     pickup: 'any',",
-				"     broadcast: 'auto')~> lookup2",
-				"lookup2, departamento lookup(department == nombre_departamento,",
-				"     multiple: false,",
-				"     pickup: 'any',",
-				"     broadcast: 'auto')~> lookup3",
-				"lookup3, serviciocargo lookup(charge_type == tipo_cargo",
-				"     && payment_status == estado_pago,",
-				"     multiple: false,",
-				"     pickup: 'any',",
-				"     broadcast: 'auto')~> lookup4",
-				"lookup4, fecha lookup(payment_date == fecha_completa,",
-				"     multiple: false,",
-				"     pickup: 'any',",
-				"     broadcast: 'auto')~> lookup5",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT fecha_key, fecha_completa FROM gold.dim_fecha',",
+				"     format: 'query') ~> fecha",
 				"facturacion, admissions join(facturacion@admission_id == admissions@admission_id,",
 				"     joinType:'inner',",
 				"     matchType:'exact',",
@@ -160,6 +160,23 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1, paciente lookup(patient_id == patient_id_bk,",
+				"     multiple: false,",
+				"     pickup: 'any',",
+				"     broadcast: 'auto')~> lookup2",
+				"lookup2, departamento lookup(trim(department) == nombre_departamento,",
+				"     multiple: false,",
+				"     pickup: 'any',",
+				"     broadcast: 'auto')~> lookup3",
+				"lookup3, serviciocargo lookup(trim(charge_type) == tipo_cargo",
+				"     && trim(payment_status) == estado_pago,",
+				"     multiple: false,",
+				"     pickup: 'any',",
+				"     broadcast: 'auto')~> lookup4",
+				"lookup4, fecha lookup(payment_date == fecha_completa,",
+				"     multiple: false,",
+				"     pickup: 'any',",
+				"     broadcast: 'auto')~> lookup5",
 				"lookup5 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
